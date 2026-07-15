@@ -32,23 +32,7 @@
     position: relative;
   }
 
-  /* floating hearts background */
-  .heart {
-    position: absolute;
-    bottom: -10%;
-    font-size: 20px;
-    opacity: 0.55;
-    animation: float linear infinite;
-    color: var(--pink-soft);
-    user-select: none;
-    pointer-events: none;
-  }
-
-  @keyframes float {
-    0%   { transform: translateY(0) rotate(0deg); opacity: 0; }
-    10%  { opacity: 0.6; }
-    100% { transform: translateY(-110vh) rotate(360deg); opacity: 0; }
-  }
+  /* No floating hearts */
 
   .card {
     position: relative;
@@ -209,12 +193,12 @@
 
 <div class="card">
   <div class="eyebrow">Một câu hỏi quan trọng</div>
-  <span class="signature">💗</span>
+  <span class="signature">✨</span>
   <h1>Do you wanna be<br>my girlfriend?</h1>
-  <div class="sub">Chọn đi, mình đợi câu trả lời của bạn~</div>
+  <div class="sub">Chọn đi, Híu đợi câu trả lời của Hải An :></div>
 
   <div class="buttons" id="buttonZone">
-    <button id="yes">Có chứ 💖</button>
+    <button id="yes">Có chứ </button>
     <button id="no">Không nhé</button>
   </div>
 
@@ -256,12 +240,12 @@
     // "yes" button grows a little each time, and text gets more playful
     if (escapeCount <= 6) {
       const msgs = [
-        'Bạn chắc chưa nè? 🥺',
-        'Ơ kìa, đừng chạy trốn câu hỏi chứ!',
-        'Nút "không" trốn mất tiêu rồi kìa 😆',
-        'Cố gắng bắt nó xem nào~',
-        'Hình như nó không muốn bị bấm đâu 😏',
-        'Thôi bấm "Có chứ" cho rồi! 💗'
+        'Hải An chắc chưa nạ? 🥺',
+        'Ơ tề Hải An, răng chạy trốn câu trả lời rứa :))',
+        'Nút "không" trốn rồi tề :)) 😆',
+        'Hải An cố lên bắt đi =)))~',
+        'Hình như hấn nỏ muốn bị bấm 😏',
+        'Thôi bấm "Có chứ" cho xong đi Hải An, này khê=))) '
       ];
       result.textContent = msgs[Math.min(escapeCount - 1, msgs.length - 1)];
       result.classList.add('show');
@@ -298,8 +282,7 @@
 
       document.querySelector('.card').innerHTML = `
         <div class="eyebrow">Yayyy 🎉</div>
-        <h1>Cảm ơn bạn nhiều nha 💕</h1>
-        <div class="sub" style="margin-bottom:0;">Thử kéo trái tim đi khắp màn hình xem~ Nhả ra nó lại về nè</div>
+        <div class="sub" style="margin-bottom:0;">Hải An thử kéo trái tim đi khắp màn hình xem~ Nhả ra hấn quay về á</div>
       `;
       initPinHeart();
     }, 3000);
@@ -345,7 +328,7 @@
       cy = H / 2;
       scale = Math.min(W, H) / 34;
 
-      const COUNT = 90;
+      const COUNT = 120;
       const old = pins;
       pins = [];
       for (let i = 0; i < COUNT; i++) {
@@ -511,14 +494,14 @@
           });
         }
       } else {
-        // Thả ra: từng mũi kim tự bay thật chậm về đúng chỗ của mình
+        // Thả ra: từng mũi kim bay siêu nhanh về đúng chỗ của mình
         for (const p of pins) {
-          p.vx = (p.vx + (p.hx - p.x) * 0.015) * 0.92;
-          p.vy = (p.vy + (p.hy - p.y) * 0.015) * 0.92;
+          p.vx = (p.vx + (p.hx - p.x) * 0.075) * 0.85;
+          p.vy = (p.vy + (p.hy - p.y) * 0.075) * 0.85;
           p.x += p.vx;
           p.y += p.vy;
           // và góc xoay cũng từ từ trở lại như ban đầu, hết "xòe vảy"
-          p.angle += (p.origAngle - p.angle) * 0.08;
+          p.angle += (p.origAngle - p.angle) * 0.12;
         }
       }
 
@@ -530,18 +513,7 @@
     tick();
   }
 
-  // ambient floating hearts
-  const heartsChars = ['💗','💕','💓','💖','✨'];
-  for (let i = 0; i < 18; i++) {
-    const h = document.createElement('div');
-    h.className = 'heart';
-    h.textContent = heartsChars[Math.floor(Math.random() * heartsChars.length)];
-    h.style.left = Math.random() * 100 + 'vw';
-    h.style.animationDuration = (6 + Math.random() * 8) + 's';
-    h.style.animationDelay = (Math.random() * 10) + 's';
-    h.style.fontSize = (14 + Math.random() * 18) + 'px';
-    document.body.appendChild(h);
-  }
+  // No floating hearts
 
   // reposition no-button safely if window resizes while it's mid-escape
   window.addEventListener('resize', () => {
