@@ -299,10 +299,236 @@
       document.querySelector('.card').innerHTML = `
         <div class="eyebrow">Yayyy 🎉</div>
         <h1>Cảm ơn bạn nhiều nha 💕</h1>
-        <div class="sub" style="margin-bottom:0;">Từ hôm nay chính thức là của nhau rồi đó nhé~</div>
+        <div class="sub" style="margin-bottom:0;">Thử kéo trái tim đi khắp màn hình xem~ Nhả ra nó lại về nè</div>
       `;
+      initPinHeart();
     }, 3000);
   });
+
+  // ---- Viền trái tim ghép từ các mũi kim ánh sáng, phủ toàn màn hình, di chuyển thật chậm ----
+  function initPinHeart() {
+    const canvas = document.createElement('canvas');
+    canvas.id = 'heart-canvas';
+    canvas.style.position = 'fixed';
+    canvas.style.inset = '0';
+    canvas.style.width = '100vw';
+    canvas.style.height = '100vh';
+    canvas.style.zIndex = '60';
+    canvas.style.cursor = 'grab';
+    canvas.style.touchAction = 'none';
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+
+    let W = window.innerWidth, H = window.innerHeight;
+    let DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+    function resize() {
+      W = window.innerWidth;
+      H = window.innerHeight;
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = W * DPR;
+      canvas.height = H * DPR;
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      rebuildPins();
+    }
+
+    let cx, cy, scale, pins;
+
+    function heartPoint(t) {
+      const x = 16 * Math.pow(Math.sin(t), 3);
+      const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+      return { x: cx + x * scale, y: cy + y * scale };
+    }
+
+    function rebuildPins() {
+      cx = W / 2;
+      cy = H / 2;
+      scale = Math.min(W, H) / 34;
+
+      const COUNT = 90;
+      const old = pins;
+      pins = [];
+      for (let i = 0; i < COUNT; i++) {
+        const t = (i / COUNT) * Math.PI * 2;
+        const p = heartPoint(t);
+        const angle = Math.atan2(p.y - cy, p.x - cx);
+        const keep = old && old[i];
+        pins.push({
+          hx: p.x, hy: p.y,
+          x: keep ? old[i].x : p.x,
+          y: keep ? old[i].y : p.y,
+          vx: keep ? old[i].vx : 0,
+          vy: keep ? old[i].vy : 0,
+          angle,
+          origAngle: angle,
+          len: 15 + Math.random() * 5,
+          colorA: Math.random() < 0.5 ? '#fff6f2' : '#ffd27a',
+          colorB: '#ff5da2'
+        });
+      }
+    }
+
+    resize();
+    window.addEventListener('resize', resize);
+
+    let dragging = false;
+    let grabIndex = -1;
+    let mouse = { x: cx, y: cy };
+
+    // Lịch sử vị trí của mũi kim đang bị nắm. Các mũi kim khác sẽ "đi lại"
+    // đúng con đường này, trễ hơn theo thứ tự -> xếp hàng thẳng, không loạn.
+    let trailHistory = [];
+    const DELAY_PER_STEP = 5;   // càng lớn, đuôi càng "giãn" ra xa nhau và vào hàng càng chậm, rõ
+    const MAX_HISTORY = 400;
+
+    function getPos(e) {
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return { x: clientX, y: clientY };
+    }
+
+    function nearestPinIndex(pos) {
+      let best = 0, bestD = Infinity;
+      pins.forEach((p, i) => {
+        const d = (p.x - pos.x) ** 2 + (p.y - pos.y) ** 2;
+        if (d < bestD) { bestD = d; best = i; }
+      });
+      return best;
+    }
+
+    function onDown(e) {
+      mouse = getPos(e);
+      grabIndex = nearestPinIndex(mouse);
+      dragging = true;
+      trailHistory = [{ x: pins[grabIndex].x, y: pins[grabIndex].y }];
+      canvas.style.cursor = 'grabbing';
+      e.preventDefault();
+    }
+    function onMove(e) {
+      if (!dragging) return;
+      mouse = getPos(e);
+      e.preventDefault();
+    }
+    function onUp() {
+      dragging = false;
+      grabIndex = -1;
+      canvas.style.cursor = 'grab';
+    }
+
+    canvas.addEventListener('mousedown', onDown);
+    canvas.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    canvas.addEventListener('touchstart', onDown, { passive: false });
+    canvas.addEventListener('touchmove', onMove, { passive: false });
+    canvas.addEventListener('touchend', onUp);
+
+    function drawNeedle(p) {
+      const dx = Math.cos(p.angle), dy = Math.sin(p.angle);
+      const px = -dy, py = dx;
+      const half = p.len / 2;
+      const waist = 1.6;
+
+      const tip1 = { x: p.x + dx * half, y: p.y + dy * half };
+      const tip2 = { x: p.x - dx * half, y: p.y - dy * half };
+      const side1 = { x: p.x + px * waist, y: p.y + py * waist };
+      const side2 = { x: p.x - px * waist, y: p.y - py * waist };
+
+      const grad = ctx.createLinearGradient(tip1.x, tip1.y, tip2.x, tip2.y);
+      grad.addColorStop(0, p.colorA);
+      grad.addColorStop(0.5, p.colorB);
+      grad.addColorStop(1, p.colorA);
+
+      ctx.beginPath();
+      ctx.moveTo(tip1.x, tip1.y);
+      ctx.lineTo(side1.x, side1.y);
+      ctx.lineTo(tip2.x, tip2.y);
+      ctx.lineTo(side2.x, side2.y);
+      ctx.closePath();
+      ctx.fillStyle = grad;
+      ctx.shadowColor = p.colorB;
+      ctx.shadowBlur = 9;
+      ctx.fill();
+    }
+
+    function tick() {
+      ctx.clearRect(0, 0, W, H);
+
+      if (dragging) {
+        // Mũi kim được nắm bám theo chuột (mượt nhẹ).
+        const g = pins[grabIndex];
+        g.vx = (g.vx + (mouse.x - g.x) * 0.06) * 0.85;
+        g.vy = (g.vy + (mouse.y - g.y) * 0.06) * 0.85;
+        g.x += g.vx;
+        g.y += g.vy;
+
+        // Ghi lại đường đi của nó vào lịch sử.
+        trailHistory.unshift({ x: g.x, y: g.y });
+        if (trailHistory.length > MAX_HISTORY) trailHistory.length = MAX_HISTORY;
+
+        // Các mũi kim còn lại (cả 2 phía) đi lại đúng con đường đó,
+        // mỗi mũi trễ hơn mũi trước theo đúng thứ tự -> xếp hàng thẳng lối,
+        // bay lần lượt theo con trỏ, không dao động lung tung.
+        const n = pins.length;
+        for (let step = 1; step < Math.ceil(n / 2) + 1; step++) {
+          const histIdx = step * DELAY_PER_STEP;
+          // Chưa đủ lịch sử tới lượt kim này -> đứng yên tại chỗ, chưa nhập hàng.
+          // Nhờ vậy các kim vào hàng LẦN LƯỢT theo thứ tự gần -> xa, không vón cục.
+          if (histIdx >= trailHistory.length) continue;
+          const target = trailHistory[histIdx];
+
+          const iR = (grabIndex + step) % n;
+          const iL = (grabIndex - step + n) % n;
+
+          // Hướng cục bộ dọc theo đường kéo, để biết "vảy" phải xòe về phía nào.
+          const refIdx = Math.min(histIdx + DELAY_PER_STEP, trailHistory.length - 1);
+          const refPoint = trailHistory[refIdx] || target;
+          const tanX0 = target.x - refPoint.x;
+          const tanY0 = target.y - refPoint.y;
+          const tanLen = Math.hypot(tanX0, tanY0) || 1;
+          const tanX = tanX0 / tanLen;
+          const tanY = tanY0 / tanLen;
+          const perpX = -tanY;
+          const perpY = tanX;
+          const tangentAngle = Math.atan2(tanY, tanX);
+
+          [iR, iL].forEach((i) => {
+            if (i === grabIndex) return;
+            const p = pins[i];
+
+            // Vảy tủa nhẹ xen kẽ theo từng lớp, nhưng CÙNG một hàng
+            // (không tách trái/phải) -> nhiều kim chồng dày trên 1 đường kéo.
+            const fanPhase = (step % 2 === 0) ? 1 : -1;
+            const fanSpread = 3 + step * 0.35;
+            const tx = target.x + perpX * fanPhase * fanSpread;
+            const ty = target.y + perpY * fanPhase * fanSpread;
+
+            p.x += (tx - p.x) * 0.25;
+            p.y += (ty - p.y) * 0.25;
+
+            // Kim nằm song song với đường kéo, chỉ hơi so le nhau như vảy chồng lên nhau
+            const wantAngle = tangentAngle + fanPhase * 0.2;
+            p.angle += (wantAngle - p.angle) * 0.3;
+          });
+        }
+      } else {
+        // Thả ra: từng mũi kim tự bay thật chậm về đúng chỗ của mình
+        for (const p of pins) {
+          p.vx = (p.vx + (p.hx - p.x) * 0.015) * 0.92;
+          p.vy = (p.vy + (p.hy - p.y) * 0.015) * 0.92;
+          p.x += p.vx;
+          p.y += p.vy;
+          // và góc xoay cũng từ từ trở lại như ban đầu, hết "xòe vảy"
+          p.angle += (p.origAngle - p.angle) * 0.08;
+        }
+      }
+
+      for (const p of pins) drawNeedle(p);
+      ctx.shadowBlur = 0;
+
+      requestAnimationFrame(tick);
+    }
+    tick();
+  }
 
   // ambient floating hearts
   const heartsChars = ['💗','💕','💓','💖','✨'];
