@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Do you wanna be my girlfriend?</title>
+<style>
+  :root{
+    --bg-deep: #1a0f1f;
+    --bg-mid: #3a1b3f;
+    --pink-glow: #ff5da2;
+    --pink-soft: #ffb3d1;
+    --cream: #fff6f2;
+    --gold: #ffd27a;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    background: radial-gradient(ellipse at 50% 20%, var(--bg-mid), var(--bg-deep) 70%);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  /* floating hearts background */
+  .heart {
+    position: absolute;
+    bottom: -10%;
+    font-size: 20px;
+    opacity: 0.55;
+    animation: float linear infinite;
+    color: var(--pink-soft);
+    user-select: none;
+    pointer-events: none;
+  }
+
+  @keyframes float {
+    0%   { transform: translateY(0) rotate(0deg); opacity: 0; }
+    10%  { opacity: 0.6; }
+    100% { transform: translateY(-110vh) rotate(360deg); opacity: 0; }
+  }
+
+  .card {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding: 48px 40px;
+    max-width: 480px;
+    width: 90%;
+  }
+
+  .eyebrow {
+    font-size: 13px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 18px;
+    font-weight: 600;
+  }
+
+  h1 {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(28px, 5vw, 42px);
+    color: var(--cream);
+    line-height: 1.35;
+    margin: 0 0 12px 0;
+    text-shadow: 0 0 30px rgba(255, 93, 162, 0.35);
+  }
+
+  .sub {
+    color: var(--pink-soft);
+    font-size: 15px;
+    margin-bottom: 44px;
+    opacity: 0.85;
+  }
+
+  .buttons {
+    position: relative;
+    height: 130px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+  }
+
+  button {
+    border: none;
+    border-radius: 999px;
+    font-size: 17px;
+    font-weight: 600;
+    padding: 16px 34px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  #yes {
+    background: linear-gradient(135deg, #ff7ab8, #ff4f9a);
+    color: #fff;
+    box-shadow: 0 8px 24px rgba(255, 79, 154, 0.45);
+  }
+
+  #yes:hover {
+    transform: scale(1.06);
+    box-shadow: 0 10px 30px rgba(255, 79, 154, 0.6);
+  }
+
+  #yes.grown {
+    transform: scale(1.9);
+  }
+
+  #no {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--pink-soft);
+    border: 1px solid rgba(255, 179, 209, 0.4);
+    position: relative;
+  }
+
+  #no.escaping {
+    position: fixed;
+    transition: top 0.18s ease, left 0.18s ease;
+    z-index: 50;
+  }
+
+  #result {
+    margin-top: 28px;
+    font-size: 16px;
+    color: var(--gold);
+    min-height: 24px;
+    font-weight: 600;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  #result.show { opacity: 1; }
+
+  .signature {
+    position: absolute;
+    top: -14px;
+    right: 6%;
+    font-size: 34px;
+    animation: pulse 1.6s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+  }
+
+  #celebration-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 6, 18, 0.88);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  #celebration-overlay.show {
+    display: flex;
+    opacity: 1;
+  }
+
+  #celebration-overlay img {
+    max-width: min(80vw, 420px);
+    max-height: 70vh;
+    border-radius: 18px;
+    box-shadow: 0 20px 60px rgba(255, 79, 154, 0.5);
+    animation: pop-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes pop-in {
+    0%   { transform: scale(0.6); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="eyebrow">Một câu hỏi quan trọng</div>
+  <span class="signature">💗</span>
+  <h1>Do you wanna be<br>my girlfriend?</h1>
+  <div class="sub">Chọn đi, mình đợi câu trả lời của bạn~</div>
+
+  <div class="buttons" id="buttonZone">
+    <button id="yes">Có chứ 💖</button>
+    <button id="no">Không nhé</button>
+  </div>
+
+  <div id="result"></div>
+</div>
+
+<div id="celebration-overlay">
+  <img src="cat-meme.png" alt="Vui quá trời vui">
+</div>
+
+<audio id="love-sound" src="love.mp3" preload="auto"></audio>
+
+<script>
+  const noBtn = document.getElementById('no');
+  const yesBtn = document.getElementById('yes');
+  const zone = document.getElementById('buttonZone');
+  const result = document.getElementById('result');
+  let escapeCount = 0;
+
+  function moveNoButton() {
+    escapeCount++;
+
+    const btnWidth = noBtn.offsetWidth;
+    const btnHeight = noBtn.offsetHeight;
+    const margin = 20;
+
+    const maxLeft = window.innerWidth - btnWidth - margin;
+    const maxTop = window.innerHeight - btnHeight - margin;
+
+    const newLeft = Math.max(margin, Math.random() * maxLeft);
+    const newTop = Math.max(margin, Math.random() * maxTop);
+
+    noBtn.classList.add('escaping');
+    noBtn.style.left = newLeft + 'px';
+    noBtn.style.top = newTop + 'px';
+
+    // "yes" button grows a little each time, and text gets more playful
+    if (escapeCount <= 6) {
+      const msgs = [
+        'Bạn chắc chưa nè? 🥺',
+        'Ơ kìa, đừng chạy trốn câu hỏi chứ!',
+        'Nút "không" trốn mất tiêu rồi kìa 😆',
+        'Cố gắng bắt nó xem nào~',
+        'Hình như nó không muốn bị bấm đâu 😏',
+        'Thôi bấm "Có chứ" cho rồi! 💗'
+      ];
+      result.textContent = msgs[Math.min(escapeCount - 1, msgs.length - 1)];
+      result.classList.add('show');
+    }
+
+    yesBtn.style.transform = `scale(${1 + Math.min(escapeCount * 0.08, 0.9)})`;
+  }
+
+  // Trigger on hover (mouse) and on click/touch (mobile) so it never gets caught
+  noBtn.addEventListener('mouseenter', moveNoButton);
+  noBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    moveNoButton();
+  });
+  noBtn.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    moveNoButton();
+  }, { passive: false });
+
+  yesBtn.addEventListener('click', () => {
+    const overlay = document.getElementById('celebration-overlay');
+    const sound = document.getElementById('love-sound');
+
+    overlay.classList.add('show');
+    sound.currentTime = 0;
+    sound.play().catch(() => {
+      // Trình duyệt có thể chặn autoplay âm thanh cho tới khi có tương tác,
+      // nhưng vì đây là trong sự kiện click nên thường sẽ phát được bình thường.
+    });
+
+    setTimeout(() => {
+      overlay.classList.remove('show');
+      sound.pause();
+
+      document.querySelector('.card').innerHTML = `
+        <div class="eyebrow">Yayyy 🎉</div>
+        <h1>Cảm ơn bạn nhiều nha 💕</h1>
+        <div class="sub" style="margin-bottom:0;">Từ hôm nay chính thức là của nhau rồi đó nhé~</div>
+      `;
+    }, 3000);
+  });
+
+  // ambient floating hearts
+  const heartsChars = ['💗','💕','💓','💖','✨'];
+  for (let i = 0; i < 18; i++) {
+    const h = document.createElement('div');
+    h.className = 'heart';
+    h.textContent = heartsChars[Math.floor(Math.random() * heartsChars.length)];
+    h.style.left = Math.random() * 100 + 'vw';
+    h.style.animationDuration = (6 + Math.random() * 8) + 's';
+    h.style.animationDelay = (Math.random() * 10) + 's';
+    h.style.fontSize = (14 + Math.random() * 18) + 'px';
+    document.body.appendChild(h);
+  }
+
+  // reposition no-button safely if window resizes while it's mid-escape
+  window.addEventListener('resize', () => {
+    if (noBtn.classList.contains('escaping')) {
+      moveNoButton();
+    }
+  });
+</script>
+
+</body>
+</html>
